@@ -1,0 +1,45 @@
+name: PERMISOS 2D - Vista previa descargable
+
+on:
+  push:
+    branches:
+      - desarrollo-permisos-2d-from-main
+    paths:
+      - 'index.html'
+      - '*.js'
+      - '*.css'
+      - 'assets/**'
+      - '.github/workflows/permisos2d-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Preparar vista previa aislada
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener rama de desarrollo
+        uses: actions/checkout@v4
+      - name: Comprobar sintaxis JavaScript
+        run: |
+          node --check app.js
+          node --check data.js
+      - name: Preparar carpeta de vista previa
+        run: |
+          mkdir -p preview
+          cp index.html preview/
+          cp ./*.js preview/
+          cp ./*.css preview/
+          cp -R assets preview/
+          test -f preview/index.html
+          test -f preview/app.js
+          test -f preview/data.js
+      - name: Guardar vista previa como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: permisos2d-preview-desarrollo
+          path: preview/
+          retention-days: 7
+          if-no-files-found: error
