@@ -1,0 +1,18 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const w=require('../workflow');
+const req=(id,status='SOLICITADA',dateRequested='2026-10-20',userId='u1')=>({id,userId,dateRequested,status});
+test('rechaza 31 de febrero',()=>assert.equal(w.isDate('2027-02-31'),false));
+test('curso correcto',()=>assert.equal(w.isInYear('2026-10-20'),true));
+test('curso incorrecto',()=>assert.equal(w.isInYear('2028-10-20'),false));
+test('cupo 75 docentes = 4',()=>assert.equal(w.MAX_CONCURRENT,4));
+test('la quinta solicitud avisa pero no se deniega',()=>assert.equal(w.warning('2026-10-20',Array.from({length:5},(_,i)=>req('S'+i,'SOLICITADA','2026-10-20','u'+i))),true));
+test('no cuenta solicitadas como concedidas',()=>assert.equal(w.countGranted('u1',[req('1')]),0));
+test('concedida y disfrutada cuentan una vez cada expediente',()=>assert.equal(w.countGranted('u1',[req('1','APROBADA'),req('2','DISFRUTADA','2026-11-20')]),2));
+test('técnico no resuelve',()=>assert.throws(()=>w.changeStatus(req('1'),'ACEPTADA',{role:'technician'})));
+test('aceptada no equivale a aprobada',()=>assert.throws(()=>w.changeStatus(req('1'),'APROBADA',{role:'director'})));
+test('aprobada exige resolución oficial',()=>assert.throws(()=>w.changeStatus(req('1'),'APROBADA',{role:'director',officialResolution:true})));
+test('presentada en Séneca puede aprobarse con constancia',()=>assert.equal(w.changeStatus(req('1','PRESENTADA_EN_SENECA'),'APROBADA',{role:'director',officialResolution:true}).status,'APROBADA'));
+test('no marca disfrutado antes de fecha',()=>assert.equal(w.autoEnjoy(req('1','APROBADA'),'2026-10-20').status,'APROBADA'));
+test('marca disfrutado después de fecha',()=>assert.equal(w.autoEnjoy(req('1','APROBADA'),'2026-10-21').status,'DISFRUTADA'));
+test('no permite anular permiso firme',()=>assert.throws(()=>w.changeStatus(req('1','APROBADA'),'CANCELACION_SOLICITADA',{role:'director'})));
+test('aviso no contiene motivos personales',()=>assert.equal(w.safeNotification('ACCEPTED',req('1')).reason,null));

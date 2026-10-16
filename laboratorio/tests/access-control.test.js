@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict');const {test}=require('node:test');
+const {ACTIONS,authorize,safeDiagnostic}=require('../access-control');
+const roster=[{id:'u1',email:'profesor@g.educaand.es',role:'teacher',active:true},{id:'u2',email:'director@g.educaand.es',role:'director',active:true},{id:'u3',email:'tecnico@g.educaand.es',role:'technician',active:true},{id:'u4',email:'baja@g.educaand.es',role:'teacher',active:false}];
+const can=(email,action,ownerId)=>authorize({identity:{email},action,ownerId,roster});
+test('un docente autorizado ve su expediente y no el ajeno',()=>{assert.equal(can(roster[0].email,ACTIONS.VIEW_OWN,'u1'),true);assert.equal(can(roster[0].email,ACTIONS.VIEW_OWN,'u2'),false)});
+test('un docente no resuelve ni importa',()=>{assert.equal(can(roster[0].email,ACTIONS.DECIDE),false);assert.equal(can(roster[0].email,ACTIONS.IMPORT),false)});
+test('Dirección resuelve e importa',()=>{assert.equal(can(roster[1].email,ACTIONS.DECIDE),true);assert.equal(can(roster[1].email,ACTIONS.IMPORT),true)});
+test('técnico mantiene pero no resuelve ni ve privados',()=>{assert.equal(can(roster[2].email,ACTIONS.CONFIGURE),true);assert.equal(can(roster[2].email,ACTIONS.DECIDE),false);assert.equal(can(roster[2].email,ACTIONS.VIEW_PRIVATE),false);assert.equal(can(roster[2].email,ACTIONS.VIEW_CASES),false)});
+test('dominio por sí solo no da acceso',()=>assert.equal(can('desconocido@g.educaand.es',ACTIONS.VIEW_CALENDAR),false));
+test('usuario inactivo no entra',()=>assert.equal(can(roster[3].email,ACTIONS.VIEW_CALENDAR),false));
+test('cuentas ajenas rechazadas',()=>assert.equal(can('admin@gmail.com',ACTIONS.CONFIGURE),false));
+test('falla cerrado si identidad no verificada',()=>assert.equal(authorize({identity:null,action:ACTIONS.DECIDE,roster}),false));
+test('diagnóstico minimizado',()=>{const d=safeDiagnostic({code:'ERR_401',message:'Profesor Juan DNI 1234'});assert.equal(JSON.stringify(d).includes('Juan'),false)});
