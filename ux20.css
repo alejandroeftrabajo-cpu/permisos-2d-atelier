@@ -1,0 +1,33 @@
+
+/* PERMISOS 2D UX 2.0 — override visual de laboratorio. No cambia lógica ni permisos. */
+:root{--ux-bg:#f7f8fa;--ux-paper:#fff;--ux-ink:#172a33;--ux-muted:#657780;--ux-line:#e3e9eb;--ux-primary:#147d79}
+body{background:var(--ux-bg)!important;color:var(--ux-ink)!important;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+.app-shell{background:var(--ux-bg)!important}
+.workspace,main{background:var(--ux-bg)!important}
+.sidebar{background:#fff!important;border-right:1px solid var(--ux-line)!important;box-shadow:none!important}
+.sidebar .brand,.sidebar .school,.sidebar .sidebar-caption,.sidebar .side-hint,.sidebar .sidebar-bottom{color:var(--ux-muted)!important}
+.side-link{color:#4b606a!important;border-radius:12px!important}
+.side-link.active,.side-link[aria-current="page"]{background:#e7f4f1!important;color:#0a625d!important;box-shadow:none!important}
+.side-link.active .nav-ico{color:#0a625d!important}
+.topbar{background:rgba(255,255,255,.97)!important;box-shadow:none!important;border-bottom:1px solid var(--ux-line)!important}
+.surface,.switch-person,.teacher-summary,.teacher-rail,.request-panel,.calendar-surface,.chart-card,.analytics-card,.case-panel,.director-metrics,.director-metric,.intro-line,.jump-bar,.director-toolbar{box-shadow:none!important}
+.surface,.switch-person,.request-panel,.calendar-surface,.chart-card{background:#fff!important;border:1px solid var(--ux-line)!important;border-radius:16px!important}
+h1,.page-title,.hero-title,.intro-line h1,.teacher-intro h1,.director-intro h1{font-size:clamp(29px,3.3vw,48px)!important;line-height:1.12!important;letter-spacing:-.045em!important;max-width:100%!important}
+.eyebrow,.sidebar-caption{letter-spacing:.09em!important;font-size:11px!important}
+.intro-line{min-height:auto!important;padding-top:16px!important;padding-bottom:16px!important;margin-bottom:12px!important;background:transparent!important}
+.intro-line:before,.intro-line:after,.hero-art,.hero-watermark,.orb,.glow,.halo{opacity:.06!important}
+.teacher-summary,.director-metrics{border-radius:14px!important}
+.teacher-summary{background:#eaf5f2!important;color:#163d3a!important}
+.calendar-surface{background:#fff!important;color:var(--ux-ink)!important}
+.calendar-surface .section-head,.calendar-surface .month-switch{color:var(--ux-ink)!important}
+button,input,select,textarea{font-family:inherit!important}
+button{transition:background .12s ease,border-color .12s ease!important}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #73bfb3!important;outline-offset:2px}
+button[type=submit],.primary-button{border-radius:10px!important}
+.teacher-layout{gap:16px!important}
+#roleLab,#roleLabPanel,.role-lab,.lab-panel{border-radius:12px!important;box-shadow:none!important}
+#teacherView,#directorView{max-width:1320px!important;margin-inline:auto!important}
+@media(min-width:901px){.sidebar{width:86px!important}.workspace{margin-left:86px!important}}
+@media(max-width:900px){.workspace{margin-left:0!important}.teacher-layout{grid-template-columns:1fr!important}}
+@media(max-width:600px){.workspace main{padding:14px!important}.intro-line{padding:12px 0!important}.teacher-layout{gap:12px!important}.topbar{padding:10px 14px!important}.teacher-summary,.surface{border-radius:12px!important}h1,.page-title,.intro-line h1{font-size:32px!important}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
