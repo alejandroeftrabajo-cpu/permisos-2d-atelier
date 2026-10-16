@@ -22,6 +22,22 @@
  <div class="workspace">
   <header class="topbar"><div class="top-left"><button id="menuToggle" class="icon-button menu-trigger" type="button" aria-label="Abrir menú" aria-expanded="false">☰</button><div class="breadcrumbs">ECOSISTEMA DIGITAL <span>/</span> <b>PERMISOS 2D</b><span>/</span> <strong id="breadcrumb">Mi espacio</strong></div></div><div class="top-actions"><span class="demo-label"><span class="green-dot"></span> SIMULACIÓN</span><div class="account"><span class="account-avatar" id="avatar">LA</span><span class="account-info"><strong id="identityName">Lia Arvendel</strong><small id="identityRole">Profesorado · Identidad inventada</small><small id="identityEmail">lia.arvendel@example.invalid</small></span></div></div></header>
   <main id="main">
+ <section id="roleLab" class="surface" aria-labelledby="roleLabTitle" style="margin-bottom:16px;padding:14px 18px;background:#f1f7f5;color:#1c3840;border:1px solid #b7d2c9;border-radius:14px">
+ <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+ <div><strong id="roleLabTitle">PERMISOS 2D · Laboratorio de perfiles</strong><p style="margin:3px 0 0;font-size:12px">Identidades simuladas. No hay autenticación institucional ni acceso a datos reales.</p></div>
+ <label for="roleLabSelect" style="display:flex;align-items:center;gap:9px;font-size:13px">Perfil ficticio
+ <select id="roleLabSelect" style="min-width:180px;max-width:100%;padding:9px;border:1px solid #90b5a9;border-radius:9px;background:white;color:#173238">
+ <option value="teacher">Profesorado</option><option value="director">Dirección</option><option value="technician">Administración técnica</option><option value="denied">Cuenta no autorizada</option>
+ </select></label></div><p id="roleLabMessage" role="status" aria-live="polite" style="margin:8px 0 0;font-size:12px"></p>
+ </section>
+ <section id="roleLabTechnical" hidden class="surface" style="padding:22px;margin-bottom:20px">
+ <span class="eyebrow">ADMINISTRACIÓN TÉCNICA · SIMULACIÓN</span><h1 style="font-size:28px;margin:10px 0">Diagnóstico del laboratorio</h1>
+ <p>Fuente: datos sintéticos en memoria. Persistencia: desactivada. Google Workspace: no conectado. Séneca: no conectado.</p>
+ <p>Este perfil no puede conceder, denegar, importar ni modificar permisos. Los errores técnicos deben registrarse sin datos personales.</p>
+ </section>
+ <section id="roleLabDenied" hidden class="surface" role="alert" style="padding:22px;margin-bottom:20px">
+ <h2>Acceso no autorizado · Simulación</h2><p>Esta identidad ficticia no puede acceder a las vistas del laboratorio.</p></section>
+ 
    <section id="teacherView" class="route-view">
     <div class="intro-line"><div><span class="eyebrow">PERMISOS 2D · CURSO 2026/2027</span><h1>Mis permisos<span class="accent">.</span></h1><p>Planifica, solicita y consulta tus días de asuntos particulares.</p></div><div class="switch-person"><label for="teacherSelect">IDENTIDAD FICTICIA</label><select id="teacherSelect" aria-label="Elegir docente ficticio"></select><small>La identidad cambia solo esta simulación.</small></div></div>
     <div class="teacher-summary" id="teacherSummary" aria-live="polite"></div>

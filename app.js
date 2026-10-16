@@ -3,6 +3,37 @@
 const $=id=>document.getElementById(id),adapter=new DemoAdapter();
 const state={route:'teacher',month:9,year:2026,userId:'u-a',selectedDate:'',caseDate:'2026-10-20',caseRequest:'S-002',data:null};
 const allRoutes=['teacher','inbox','calendar','ledger','analytics'];
+// Simulación de roles en el navegador. NO es autenticación ni control de acceso real.
+let labRole='teacher';
+function labAllows(route){
+ if(labRole==='teacher')return route==='teacher';
+ if(labRole==='director')return route!=='teacher'&&allRoutes.includes(route);
+ return false;
+}
+function labSync(){
+ const teacher=labRole==='teacher',director=labRole==='director';
+ $('teacherView').hidden=!teacher||state.route!=='teacher';
+ $('directorView').hidden=!director||state.route==='teacher';
+ $('roleLabTechnical').hidden=labRole!=='technician';
+ $('roleLabDenied').hidden=labRole!=='denied';
+ const notes={teacher:'Docente ficticio: consultas y solicitudes personales.',director:'Dirección ficticia: bandeja, calendario, resoluciones y analítica.',technician:'Solo diagnóstico sintético; sin acceso administrativo.',denied:'La simulación bloquea las vistas.'};
+ $('roleLabMessage').textContent=notes[labRole];
+ document.querySelectorAll('[data-route]').forEach(b=>{
+  b.hidden=!labAllows(b.dataset.route);
+  b.disabled=!labAllows(b.dataset.route);
+ });
+ if(labRole!=='teacher')$('requestModal').hidden=true;
+}
+function labSetRole(next){
+ if(!['teacher','director','technician','denied'].includes(next))return;
+ labRole=next;
+ state.route=next==='teacher'?'teacher':'inbox';
+ closeMenu();
+ if(next==='teacher'||next==='director')render();
+ else renderIdentity();
+ labSync();
+}
+
 const escapeHtml=str=>String(str??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const user=id=>state.data.users.find(p=>p.id===id);
 const rows=()=>state.data.requests;
@@ -23,7 +54,7 @@ function renderCalendar(id,monthId,selected,onSelect){const root=$(id);root.repl
   const button=document.createElement('button');button.type='button';button.className='calendar-day'+(off?' off':'')+(requests.length?' has-demand':'')+(isConflict?' conflict':'')+(selected===key?' selected':'');button.setAttribute('aria-label',`${prettyDate(key)}, ${off?'no lectivo en demo, ':''}${requests.length} registros, ${grantedOnDate(key).length} concedidos`);button.setAttribute('aria-pressed',String(selected===key));
   button.innerHTML=`<span class="date-number">${n}</span><span class="occupancy-dots" aria-hidden="true">${requests.slice(0,5).map(r=>`<i class="${escapeHtml(r.status)}"></i>`).join('')}</span><span class="day-count">${requests.length?requests.length+' reg.':'\u00a0'}</span>`;
   button.addEventListener('click',()=>onSelect(key));root.append(button)} }
-function renderIdentity(){const teacher=state.route==='teacher';const person=user(state.userId),name=teacher?person.name:'Dirección de prueba',email=teacher?person.email:'direccion@example.invalid',parts=name.split(/\s+/).slice(0,2);$('identityName').textContent=name;$('identityRole').textContent=teacher?'Profesorado · Demostración':'Dirección · Demostración';$('identityEmail').textContent=email;$('avatar').textContent=parts.map(p=>p[0]).join('').toUpperCase();}
+function renderIdentity(){const teacher=labRole==='teacher';const person=user(state.userId),name=teacher?person.name:labRole==='director'?'Dirección de prueba':labRole==='technician'?'Técnico de prueba':'Sin autorización',email=teacher?person.email:labRole==='director'?'direccion@example.invalid':labRole==='technician'?'tecnico@example.invalid':'sin-acceso@example.invalid',parts=name.split(/\s+/).slice(0,2);$('identityName').textContent=name;$('identityRole').textContent=teacher?'Profesorado · Demostración':labRole==='director'?'Dirección · Demostración':labRole==='technician'?'Mantenimiento · Demostración':'Acceso denegado · Demostración';$('identityEmail').textContent=email;$('avatar').textContent=parts.map(p=>p[0]).join('').toUpperCase();}
 function renderTeacher(){const mine=own(),g=mine.filter(x=>['CONCEDIDO','DISFRUTADO'].includes(x.status)).length,p=mine.filter(x=>x.status==='SOLICITADO').length,committed=mine.filter(x=>['SOLICITADO','CONCEDIDO'].includes(x.status)).length;
  $('teacherSummary').innerHTML=`<div class="summary-item highlight"><small>POR CONCEDER · SALDO ORIENTATIVO</small><strong>${Math.max(0,DEMO_ALLOWANCE-g)} <span>/ ${DEMO_ALLOWANCE} días</span></strong><span>No refleja la disponibilidad administrativa.</span></div><div class="summary-item"><small>SOLICITUDES PENDIENTES</small><strong>${p}</strong><span>Sin resolución registrada</span></div><div class="summary-item"><small>CONCEDIDOS / COMPROMETIDOS</small><strong>${g} <span>/ ${committed}</span></strong><span>Concesiones / pendientes + concedidos</span></div>`;
  renderCalendar('teacherCalendar','teacherMonth',state.selectedDate,date=>{state.selectedDate=date;renderTeacher()});
@@ -67,9 +98,9 @@ function render(){renderIdentity();$('teacherView').hidden=state.route!=='teache
  for(const b of document.querySelectorAll('[data-route]')){const active=b.dataset.route===state.route;b.classList.toggle('active',active);if(b.classList.contains('tab'))b.classList.toggle('active',active);if(b.classList.contains('side-link'))active?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')}
  for(const [name,id] of Object.entries({inbox:'inboxPage',calendar:'calendarPage',ledger:'ledgerPage',analytics:'analyticsPage'}))$(id).hidden=state.route!==name;
  if(state.route==='teacher')renderTeacher();else {const titles={inbox:['Centro de control','Prioriza expedientes, consulta concurrencias y documenta decisiones ficticias.'],calendar:['Ocupación y concurrencias','Visualiza solicitudes y concesiones en el calendario de prueba.'],ledger:['Registro de resoluciones','Documenta decisiones ficticias con motivación, fecha y criterio.'],analytics:['Analítica y memoria','Explora patrones de demanda y prepara un informe de demostración.']};const [h,p]=titles[state.route];$('directorHeading').innerHTML=escapeHtml(h)+'<span class="accent">.</span>';$('directorSubheading').textContent=p;renderMetrics();if(state.route==='inbox')renderQueue();if(state.route==='calendar')renderAdminCalendar();if(state.route==='ledger')renderLedger();if(state.route==='analytics')renderAnalytics()}}
-function route(name){if(!allRoutes.includes(name))return;state.route=name;closeMenu();render();window.scrollTo({top:0,behavior:'instant'})}
+function route(name){if(!allRoutes.includes(name)||!labAllows(name))return;state.route=name;closeMenu();render();labSync();window.scrollTo({top:0,behavior:'instant'})}
 function closeMenu(){$('sidebar').classList.remove('open');$('navBackdrop').hidden=true;$('menuToggle').setAttribute('aria-expanded','false')}
-function openModal(){if($('requestButton').disabled)return;const d=state.selectedDate;const a=activeOnDate(d);$('modalReview').innerHTML=[['Docente',userLabel(state.userId)],['Fecha',escapeHtml(prettyDate(d))],['Solicitudes activas',String(a.length)],['Concedidas en la fecha',String(grantedOnDate(d).length)],['Naturaleza','Sin tramitación administrativa']].map(([l,v])=>`<div class="modal-review-row"><span>${l}</span><strong>${v}</strong></div>`).join('');$('requestModal').hidden=false;$('modalCancel').focus()}
+function openModal(){if(labRole!=='teacher'||$('requestButton').disabled)return;const d=state.selectedDate;const a=activeOnDate(d);$('modalReview').innerHTML=[['Docente',userLabel(state.userId)],['Fecha',escapeHtml(prettyDate(d))],['Solicitudes activas',String(a.length)],['Concedidas en la fecha',String(grantedOnDate(d).length)],['Naturaleza','Sin tramitación administrativa']].map(([l,v])=>`<div class="modal-review-row"><span>${l}</span><strong>${v}</strong></div>`).join('');$('requestModal').hidden=false;$('modalCancel').focus()}
 function closeModal(){$('requestModal').hidden=true;resetFocusTo($('requestButton'))}
 function buildReport(){
  const d=analyticsData(),period=$('periodFilter').selectedOptions[0]?.textContent||'Curso completo';
@@ -119,13 +150,13 @@ function buildReport(){
  w.document.open();w.document.write(html);w.document.close();w.focus();w.print()
 }
 async function refresh(){state.data=await adapter.getDashboard();render()}
-function bindEvents(){document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>route(b.dataset.route));$('teacherSelect').onchange=async e=>{state.userId=e.target.value;state.selectedDate='';await refresh()};
+function bindEvents(){$('roleLabSelect').addEventListener('change',e=>labSetRole(e.target.value));document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>route(b.dataset.route));$('teacherSelect').onchange=async e=>{state.userId=e.target.value;state.selectedDate='';await refresh()};
  for(const [id,delta] of [['teacherPrev',-1],['teacherNext',1],['adminPrev',-1],['adminNext',1]])$(id).onclick=()=>{const v=new Date(Date.UTC(state.year,state.month+delta,1));state.year=v.getUTCFullYear();state.month=v.getUTCMonth();render()};
  $('queueSearch').oninput=renderQueue;$('queueFilter').onchange=renderQueue;$('periodFilter').onchange=renderAnalytics;$('requestButton').onclick=openModal;$('modalCancel').onclick=closeModal;document.querySelector('[data-close-modal]').onclick=closeModal;
- $('modalConfirm').onclick=async()=>{try{await adapter.requestDay({userId:state.userId,dateRequested:state.selectedDate});closeModal();await refresh()}catch(e){alert(e.message);closeModal()}};
- $('decisionDate').value='2026-10-09';$('decisionForm').onsubmit=async e=>{e.preventDefault();try{const payload={requestId:$('decisionRequest').value,outcome:$('decisionOutcome').value,resolvedAt:$('decisionDate').value,reason:$('decisionReason').value,rule:$('decisionRule').value,notes:$('decisionNotes').value};await adapter.resolveRequest(payload);$('decisionReason').value='';$('decisionRule').value='';$('decisionNotes').value='';await refresh();$('decisionFeedback').textContent='Resolución ficticia registrada únicamente en esta sesión.'}catch(err){$('decisionFeedback').textContent='No se registró la resolución: '+err.message}};
+ $('modalConfirm').onclick=async()=>{if(labRole!=='teacher')return;try{await adapter.requestDay({userId:state.userId,dateRequested:state.selectedDate});closeModal();await refresh()}catch(e){alert(e.message);closeModal()}};
+ $('decisionDate').value=new Date().toISOString().slice(0,10);$('decisionForm').onsubmit=async e=>{e.preventDefault();if(labRole!=='director')return;try{const payload={requestId:$('decisionRequest').value,outcome:$('decisionOutcome').value,resolvedAt:$('decisionDate').value,reason:$('decisionReason').value,rule:$('decisionRule').value,notes:$('decisionNotes').value};await adapter.resolveRequest(payload);$('decisionReason').value='';$('decisionRule').value='';$('decisionNotes').value='';await refresh();$('decisionFeedback').textContent='Resolución ficticia registrada únicamente en esta sesión.'}catch(err){$('decisionFeedback').textContent='No se registró la resolución: '+err.message}};
  $('printReport').onclick=buildReport;$('menuToggle').onclick=()=>{const open=$('sidebar').classList.toggle('open');$('navBackdrop').hidden=!open;$('menuToggle').setAttribute('aria-expanded',String(open))};$('navBackdrop').onclick=closeMenu;
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('requestModal').hidden)closeModal();closeMenu()}if(e.key==='Tab'&&!$('requestModal').hidden){const items=[$('modalCancel'),$('modalConfirm')];if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1).focus()}else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0].focus()}}});}
-async function init(){try{state.data=await adapter.getDashboard();$('teacherSelect').innerHTML=state.data.users.map(u=>`<option value="${escapeHtml(u.id)}">${escapeHtml(u.name)}</option>`).join('');$('teacherSelect').value=state.userId;bindEvents();render()}catch(e){$('main').textContent='Error al iniciar laboratorio: '+e.message;throw e}}
+async function init(){try{state.data=await adapter.getDashboard();$('teacherSelect').innerHTML=state.data.users.map(u=>`<option value="${escapeHtml(u.id)}">${escapeHtml(u.name)}</option>`).join('');$('teacherSelect').value=state.userId;bindEvents();render();labSync()}catch(e){$('main').textContent='Error al iniciar laboratorio: '+e.message;throw e}}
 init();
 })();

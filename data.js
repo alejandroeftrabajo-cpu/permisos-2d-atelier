@@ -1,7 +1,8 @@
 /* PERMISOS 2D · fuente de datos de laboratorio. No usa red, cookies ni almacenamiento local. */
 'use strict';
-const DEMO_CAPACITY=4; // Hipótesis de demostración, NO parámetro normativo validado.
-const DEMO_ALLOWANCE=2; // Solo diseño visual, NO adjudicación administrativa.
+const DEMO_CAPACITY=4; // Parámetro de laboratorio: 75 docentes, cupo de referencia 4. Sin efecto administrativo.
+const DEMO_ALLOWANCE=2; // Días lectivos de referencia; sin adjudicación administrativa.
+const DEMO_TIE_LETTER="Ñ"; // Referencia facilitada para 2026/2027, sin desempate automático.
 const DEMO_NON_TEACHING=new Set(['2026-10-12','2026-11-02','2026-12-07','2026-12-08','2027-01-06','2027-02-26','2027-03-01','2027-05-03']);
 const DEMO_USERS=[
  {id:'u-a',name:'Lia Arvendel',email:'lia.arvendel@example.invalid'},
@@ -37,12 +38,12 @@ class DemoAdapter{
  async getDashboard(){return {users:structuredClone(this.users),requests:structuredClone(this.requests),resolutions:structuredClone(this.resolutions),capacity:DEMO_CAPACITY,allowance:DEMO_ALLOWANCE,source:'synthetic',persistence:false}}
  async requestDay({userId,dateRequested}){
   if(!this.users.find(u=>u.id===userId))throw new Error('Identidad ficticia desconocida');
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateRequested)||Number.isNaN(isoDate(dateRequested).getTime())||isOff(dateRequested))throw new Error('Fecha no válida para esta demostración');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateRequested)||dateKey(isoDate(dateRequested))!==dateRequested||isOff(dateRequested))throw new Error('Fecha no válida para esta demostración');
   const current=this.requests.filter(r=>r.userId===userId);
   if(current.some(r=>r.dateRequested===dateRequested&&['SOLICITADO','CONCEDIDO','DISFRUTADO'].includes(r.status)))throw new Error('Ya tienes una solicitud para esa fecha');
   if(current.filter(r=>['SOLICITADO','CONCEDIDO'].includes(r.status)).length>=DEMO_ALLOWANCE)throw new Error('Se ha alcanzado el límite experimental de días comprometidos');
   const id='S-'+String(this.nextId++).padStart(3,'0');
-  const created={id,userId,dateRequested,submittedAt:'2026-10-09',status:'SOLICITADO'};
+  const created={id,userId,dateRequested,submittedAt:new Date().toISOString().slice(0,10),status:'SOLICITADO'};
   this.requests.push(created);return structuredClone(created);
  }
  async resolveRequest({requestId,outcome,reason,rule,resolvedAt,notes}){
